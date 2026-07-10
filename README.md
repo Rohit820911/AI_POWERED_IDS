@@ -32,9 +32,9 @@ The main dashboard provides an overview of analyzed network flows, detected thre
 
 <!-- Replace the path below if your screenshot filename is different -->
 
-```markdown
+
 ![Security Operations Dashboard](screenshots/dashboard.png)
-```
+
 
 ---
 
@@ -42,9 +42,9 @@ The main dashboard provides an overview of analyzed network flows, detected thre
 
 Detected flows are presented through a searchable and filterable alert interface containing model predictions, severity, attack type, confidence, and Isolation Forest anomaly scores.
 
-```markdown
+
 ![Security Alerts](screenshots/alerts.png)
-```
+
 
 ---
 
@@ -52,9 +52,9 @@ Detected flows are presented through a searchable and filterable alert interface
 
 The Zero-Day view displays anomalous flows identified by Isolation Forest that were classified as benign by the supervised models.
 
-```markdown
+
 ![Zero-Day Candidates](screenshots/zero-day.png)
-```
+
 
 ---
 
@@ -62,9 +62,9 @@ The Zero-Day view displays anomalous flows identified by Isolation Forest that w
 
 Users can upload CICFlowMeter/CICIDS2017-formatted network flow CSV files for analysis by the complete machine learning pipeline.
 
-```markdown
+
 ![Upload and Analyze](screenshots/upload-analyze.png)
-```
+
 
 ---
 
@@ -72,9 +72,9 @@ Users can upload CICFlowMeter/CICIDS2017-formatted network flow CSV files for an
 
 The live capture interface allows network interface selection, flow monitoring, model-based traffic analysis, incident generation, and session export.
 
-```markdown
+
 ![Live Capture](screenshots/live-capture.png)
-```
+
 
 ---
 
@@ -236,80 +236,149 @@ This imbalance is an important challenge when evaluating intrusion detection mod
 
 ## Model Evaluation
 
-The supervised models were evaluated using confusion matrices and classification reports.
+Evaluating an Intrusion Detection System using accuracy alone can be misleading, especially when working with an imbalanced dataset such as CICIDS2017.
 
-Evaluation focused on more than overall accuracy because intrusion detection datasets can be highly imbalanced.
+For this reason, the supervised models were evaluated using multiple metrics:
 
-Important metrics include:
+- Accuracy
+- Macro Precision
+- Macro Recall
+- Macro F1-Score
+- False Positive Rate (FPR)
+- Per-class classification performance
+- Confusion matrices
 
-* Precision
-* Recall
-* F1-score
-* Confusion Matrix
-* Per-class classification performance
+### Supervised Model Performance
+
+| Model | Accuracy | Macro Precision | Macro Recall | Macro F1-Score | FPR |
+|---|---:|---:|---:|---:|---:|
+| Random Forest | 99.83% | **94.34%** | 85.44% | 87.18% | **0.15%** |
+| XGBoost | 99.83% | 91.32% | **92.81%** | **91.99%** | 0.16% |
+
+Both Random Forest and XGBoost achieved an overall accuracy of approximately **99.83%** with very low false positive rates.
+
+However, accuracy alone does not provide a complete picture of model performance. The CICIDS2017 dataset is highly imbalanced, with significantly more samples for some traffic classes than others.
+
+XGBoost achieved a higher **Macro Recall of 92.81%** and **Macro F1-Score of 91.99%**, indicating more balanced performance across the different traffic classes.
+
+Random Forest achieved a higher **Macro Precision of 94.34%** and a slightly lower **False Positive Rate of 0.15%**.
+
+These results demonstrate why multiple evaluation metrics are important when evaluating machine learning models for network intrusion detection.
 
 ---
 
-### Random Forest Confusion Matrix
+### Random Forest Evaluation
+
+The Random Forest classifier achieved:
+
+| Metric | Result |
+|---|---:|
+| Accuracy | 99.83% |
+| Macro Precision | 94.34% |
+| Macro Recall | 85.44% |
+| Macro F1-Score | 87.18% |
+| False Positive Rate | 0.15% |
+
+The model achieved strong overall classification performance and maintained a very low false positive rate.
+
+However, the per-class evaluation and confusion matrix demonstrate that some minority attack classes are more difficult to classify reliably because of the significant class imbalance in the CICIDS2017 dataset.
 
 ![Random Forest Confusion Matrix](screenshots/confusion_matrix_rf.png)
 
-The Random Forest model demonstrates strong classification performance across many of the larger CICIDS2017 classes.
-
-However, the confusion matrix also demonstrates the difficulty of correctly identifying attack categories with very limited training samples.
-
 ---
 
-### XGBoost Confusion Matrix
+### XGBoost Evaluation
+
+The XGBoost classifier achieved:
+
+| Metric | Result |
+|---|---:|
+| Accuracy | 99.83% |
+| Macro Precision | 91.32% |
+| Macro Recall | 92.81% |
+| Macro F1-Score | 91.99% |
+| False Positive Rate | 0.16% |
+
+XGBoost achieved the strongest Macro F1-Score and Macro Recall of the two supervised models.
+
+The higher Macro Recall indicates that XGBoost was more effective at detecting samples across the different traffic classes, including classes with fewer examples.
 
 ![XGBoost Confusion Matrix](screenshots/confusion_matrix_xgb.png)
 
-XGBoost also achieves strong classification results across many attack categories.
-
-Comparing the two confusion matrices helps identify differences between Random Forest and XGBoost predictions and provides a more detailed understanding than relying only on overall accuracy.
-
 ---
 
-## Feature Importance
+## Feature Importance Analysis
 
-Random Forest feature importance was analyzed to understand which network flow characteristics contributed most strongly to classification decisions.
+Random Forest feature importance was analyzed to better understand which network flow characteristics contributed most strongly to classification decisions.
 
 ![Random Forest Feature Importance](screenshots/feature_importance.png)
 
-Important features identified during model analysis include:
+Some of the most influential network flow features identified during model evaluation include:
 
-* Destination Port
-* Initial backward TCP window bytes
-* Maximum forward packet length
-* Maximum backward packet length
-* Backward packets per second
-* Flow packets per second
-* Initial forward TCP window bytes
-* Total length of forward packets
-* Packet length variance
-* Flow inter-arrival time
-* Flow duration
-* Flow bytes per second
+- Destination Port
+- Initial backward TCP window bytes
+- Maximum forward packet length
+- Maximum backward packet length
+- Backward packets per second
+- Flow packets per second
+- Initial forward TCP window bytes
+- Total length of forward packets
+- Packet length variance
+- Flow inter-arrival time
+- Flow duration
+- Flow bytes per second
 
-Feature importance analysis provides insight into the network characteristics the model relies upon when distinguishing benign and malicious traffic.
+Feature importance analysis provides additional insight into the network traffic characteristics used by the model when distinguishing between benign and malicious flows.
+
+---
+
+## Isolation Forest Evaluation
+
+Isolation Forest is used as the anomaly detection component of the system.
+
+Unlike Random Forest and XGBoost, Isolation Forest is not used for multiclass attack classification. Instead, it identifies network flows that differ from learned normal traffic behavior.
+
+### Isolation Forest Results
+
+| Metric | Result |
+|---|---:|
+| Attack Recall | 99.05% |
+| Attack Precision | 80.01% |
+| False Positive Rate | 68.88% |
+| True Positives | 110,251 |
+| False Positives | 27,552 |
+| True Negatives | 12,448 |
+| False Negatives | 1,061 |
+
+The Isolation Forest model achieved a high **Attack Recall of 99.05%**, meaning that it identified a large proportion of malicious traffic as anomalous.
+
+However, the model also produced a **False Positive Rate of 68.88%**.
+
+This demonstrates an important challenge in anomaly-based intrusion detection: increasing sensitivity to unusual behavior can also result in legitimate network traffic being incorrectly flagged as suspicious.
+
+![Isolation Forest Anomaly Score Distribution](screenshots/anomaly_score_histogram.png)
+
+Because of this limitation, Isolation Forest predictions are not treated as confirmed attacks.
+
+Instead, the model is used as an additional anomaly detection layer within the IDS pipeline.
+
+Flows identified only by Isolation Forest are presented as **zero-day candidates** for further security investigation.
+
+> **Important:** A zero-day candidate in this project represents anomalous network behavior that requires further investigation. It does not represent a confirmed zero-day vulnerability.
 
 ---
 
-## Isolation Forest Analysis
+## Model Evaluation Summary
 
-Isolation Forest is used to analyze unusual network flow behavior.
+The evaluation results demonstrate the different roles of the three machine learning models within the system:
 
-The anomaly score distribution demonstrates how benign and malicious traffic are distributed across the Isolation Forest decision space.
+- **Random Forest** provides strong multiclass classification performance with high precision and a low false positive rate.
+- **XGBoost** achieves stronger overall performance across attack classes based on Macro Recall and Macro F1-Score.
+- **Isolation Forest** provides high anomaly detection sensitivity but also generates a significant number of false positives.
 
-![Isolation Forest Anomaly Scores](screenshots/anomaly_score_histogram.png)
+Rather than relying on a single model, the project combines supervised classification and anomaly detection to provide multiple perspectives on network traffic.
 
-The visualization also demonstrates an important limitation of anomaly detection: benign and attack traffic may overlap.
-
-For this reason, Isolation Forest is not treated as definitive proof of an attack.
-
-Instead, the model acts as an additional detection layer for identifying suspicious behavior that may require further investigation.
-
----
+The supervised models focus on identifying known attack patterns, while Isolation Forest acts as an experimental anomaly detection layer for identifying unusual traffic that may require further investigation.
 
 ## SOC-Inspired Dashboard
 
