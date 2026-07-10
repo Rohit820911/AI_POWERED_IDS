@@ -575,33 +575,9 @@ python app.py
 
 Open the local address displayed in the terminal.
 
----
 
-## Adding the Screenshots
 
-I recommend this structure inside your repository:
 
-```text
-AI_POWERED_IDS/
-│
-├── screenshots/
-│   ├── dashboard.png
-│   ├── live-capture.png
-│   ├── alerts.png
-│   ├── zero-day.png
-│   ├── upload-analyze.png
-│   ├── attack_distribution.png
-│   ├── confusion_matrix_rf.png
-│   ├── confusion_matrix_xgb.png
-│   ├── feature_importance.png
-│   └── anomaly_score_histogram.png
-│
-├── app.py
-├── requirements.txt
-└── README.md
-```
-
----
 
 ## Limitations
 
