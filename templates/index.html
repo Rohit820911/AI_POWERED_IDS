@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sentinel · AI-IDS Security Operations Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:        #0F172A;
+  --bg-side:   #111827;
+  --panel:     #1E293B;
+  --panel-alt: #17233A;
+  --border:    #293548;
+  --border-lt: #32405A;
+  --text:      #E2E8F0;
+  --text-dim:  #94A3B8;
+  --text-mute: #64748B;
+  --accent:    #3B82F6;
+  --accent-dim:#1D4ED8;
+  --critical:  #EF4444;
+  --high:      #F97316;
+  --medium:    #EAB308;
+  --normal:    #22C55E;
+  --radius:    8px;
+  --sp-1: 8px; --sp-2: 16px; --sp-3: 24px;
+  --shadow: 0 1px 2px rgba(0,0,0,.35), 0 1px 1px rgba(0,0,0,.15);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Inter',-apple-system,'Segoe UI',sans-serif;
+  font-size:13px; line-height:1.5;
+  display:flex; min-height:100vh;
+}
+.mono{font-family:'Roboto Mono',monospace;}
+::selection{background:rgba(59,130,246,.35);}
+::-webkit-scrollbar{width:8px;height:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border-lt);border-radius:4px;}
+button{font-family:inherit;}
+
+/* ───────────────── SIDEBAR ───────────────── */
+.sidebar{width:220px; min-width:220px; background:var(--bg-side); border-right:1px solid var(--border); display:flex; flex-direction:column; height:100vh; position:sticky; top:0;}
+.brand{display:flex; align-items:center; gap:10px; padding:20px var(--sp-2); border-bottom:1px solid var(--border);}
+.brand-mark{width:26px; height:26px; border-radius:6px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:#fff; flex-shrink:0;}
+.brand-name{font-size:14px; font-weight:600; letter-spacing:-.01em;}
+.brand-sub{font-size:10px; color:var(--text-mute); margin-top:1px;}
+.nav{flex:1; padding:var(--sp-2) var(--sp-1); overflow-y:auto;}
+.nav-section-label{font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.6px; color:var(--text-mute); padding:14px var(--sp-2) 6px;}
+.nav-item{display:flex; align-items:center; gap:10px; padding:8px var(--sp-2); margin:1px 0; border-radius:6px; font-size:12.5px; font-weight:500; color:var(--text-dim); cursor:pointer; text-decoration:none;}
+.nav-item svg{width:16px; height:16px; flex-shrink:0; opacity:.85;}
+.nav-item:hover{background:rgba(255,255,255,.04); color:var(--text);}
+.nav-item.active{background:rgba(59,130,246,.12); color:#fff;}
+.nav-item.active svg{opacity:1;}
+.nav-badge{margin-left:auto; font-size:10px; font-weight:600; background:rgba(239,68,68,.15); color:var(--critical); padding:1px 6px; border-radius:10px;}
+.sidebar-foot{border-top:1px solid var(--border); padding:var(--sp-2); display:flex; align-items:center; gap:10px;}
+.avatar{width:28px; height:28px; border-radius:50%; background:var(--panel); border:1px solid var(--border-lt); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:var(--text-dim); flex-shrink:0;}
+.foot-name{font-size:12px; font-weight:600; color:var(--text);}
+.foot-role{font-size:10.5px; color:var(--text-mute);}
+
+/* ───────────────── MAIN ───────────────── */
+.main{flex:1; display:flex; flex-direction:column; min-width:0;}
+.topbar{height:56px; min-height:56px; background:var(--bg-side); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; padding:0 var(--sp-3); position:sticky; top:0; z-index:20;}
+.topbar-left{display:flex; align-items:center; gap:14px; min-width:0;}
+.page-title{font-size:15px; font-weight:600; letter-spacing:-.01em; white-space:nowrap;}
+.env-pill{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; padding:3px 10px 3px 8px; border-radius:20px; white-space:nowrap;}
+.env-pill.ok{color:var(--normal); background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.25);}
+.env-pill.off{color:var(--text-mute); background:rgba(148,163,184,.08); border:1px solid var(--border);}
+.env-pill.live{color:var(--accent); background:rgba(59,130,246,.12); border:1px solid rgba(59,130,246,.3);}
+.env-dot{width:6px; height:6px; border-radius:50%; background:currentColor;}
+.topbar-right{display:flex; align-items:center; gap:18px;}
+.clock{font-size:12px; color:var(--text-dim);}
+.icon-btn{width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; color:var(--text-dim); cursor:pointer; border:1px solid transparent; position:relative; background:none;}
+.icon-btn:hover{background:rgba(255,255,255,.05); border-color:var(--border);}
+.icon-btn svg{width:16px; height:16px;}
+
+.content{flex:1; padding:var(--sp-3); overflow-y:auto;}
+.content-header{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:var(--sp-3); gap:var(--sp-2); flex-wrap:wrap;}
+.content-title{font-size:12.5px; color:var(--text-mute);}
+.content-title b{color:var(--text); font-weight:600;}
+
+.page{display:none;}
+.page.active{display:block;}
+
+/* ───────────────── KPI ROW ───────────────── */
+.kpi-row{display:grid; grid-template-columns:repeat(4,1fr); gap:var(--sp-2); margin-bottom:var(--sp-2);}
+.kpi{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:18px var(--sp-2); box-shadow:var(--shadow);}
+.kpi-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;}
+.kpi-label{font-size:11.5px; font-weight:600; color:var(--text-dim);}
+.kpi-icon{width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center;}
+.kpi-icon svg{width:14px; height:14px;}
+.kpi-icon.blue{background:rgba(59,130,246,.12); color:var(--accent);}
+.kpi-icon.red{background:rgba(239,68,68,.12); color:var(--critical);}
+.kpi-icon.green{background:rgba(34,197,94,.12); color:var(--normal);}
+.kpi-icon.slate{background:rgba(148,163,184,.12); color:var(--text-dim);}
+.kpi-value{font-size:26px; font-weight:700; letter-spacing:-.02em; font-family:'Roboto Mono',monospace;}
+.kpi-foot{font-size:11px; color:var(--text-mute); margin-top:8px;}
+
+/* ───────────────── PANELS / GRID ───────────────── */
+.grid-2{display:grid; grid-template-columns:1.3fr 1fr; gap:var(--sp-2); margin-bottom:var(--sp-2);}
+.grid-2b{display:grid; grid-template-columns:1fr 1.3fr; gap:var(--sp-2); margin-bottom:var(--sp-2);}
+.grid-2e{display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-2); margin-bottom:var(--sp-2);}
+
+.panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); display:flex; flex-direction:column; min-width:0;}
+.panel-head{display:flex; align-items:center; justify-content:space-between; padding:14px var(--sp-2); border-bottom:1px solid var(--border); gap:var(--sp-1);}
+.panel-title{font-size:12.5px; font-weight:600; color:var(--text);}
+.panel-sub{font-size:11px; color:var(--text-mute); margin-top:1px;}
+.panel-link{font-size:11.5px; font-weight:600; color:var(--accent); cursor:pointer; text-decoration:none; background:none; border:none;}
+.panel-body{padding:var(--sp-2);}
+
+/* ───────────────── EMPTY STATE ───────────────── */
+.empty{padding:40px 24px; text-align:center; color:var(--text-mute);}
+.empty-title{font-size:12.5px; font-weight:600; color:var(--text-dim); margin-bottom:4px;}
+.empty-sub{font-size:11.5px;}
+
+/* ───────────────── BAR CHART ───────────────── */
+.bar-row{margin-bottom:14px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-meta{display:flex; justify-content:space-between; font-size:11.5px; margin-bottom:6px;}
+.bar-label{display:flex; align-items:center; gap:8px; color:var(--text);}
+.bar-swatch{width:8px; height:8px; border-radius:2px; flex-shrink:0;}
+.bar-count{font-family:'Roboto Mono',monospace; color:var(--text-dim); font-size:11px;}
+.bar-track{height:7px; background:var(--panel-alt); border-radius:4px; overflow:hidden;}
+.bar-fill{height:100%; border-radius:4px;}
+
+/* ───────────────── TIMELINE / CHART ───────────────── */
+.chart-wrap{padding:var(--sp-2);}
+.chart-legend{display:flex; gap:16px; margin-bottom:4px;}
+.legend-item{display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-dim);}
+.legend-swatch{width:10px; height:3px; border-radius:2px;}
+
+/* ───────────────── TABLE ───────────────── */
+.table-toolbar{display:flex; align-items:center; gap:10px; padding:12px var(--sp-2); border-bottom:1px solid var(--border); flex-wrap:wrap;}
+.search-input{flex:1; max-width:280px; background:var(--panel-alt); border:1px solid var(--border); border-radius:6px; padding:7px 10px 7px 32px; font-size:12px; color:var(--text); font-family:'Inter',sans-serif; outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' stroke='%2364748B' stroke-width='2' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:10px center;}
+.search-input:focus{border-color:var(--accent);}
+.search-input::placeholder{color:var(--text-mute);}
+.filter-group{display:flex; gap:6px; margin-left:auto; flex-wrap:wrap;}
+.filter-chip{font-size:11px; font-weight:600; padding:5px 11px; border-radius:6px; border:1px solid var(--border); color:var(--text-dim); cursor:pointer; background:none;}
+.filter-chip.active{background:rgba(59,130,246,.12); border-color:rgba(59,130,246,.4); color:var(--accent);}
+
+.table-scroll{overflow-x:auto; max-height:420px; overflow-y:auto;}
+table{width:100%; border-collapse:collapse; font-size:12px;}
+thead th{position:sticky; top:0; background:var(--panel); z-index:2; text-align:left; font-size:10.5px; font-weight:600; text-transform:uppercase; letter-spacing:.5px; color:var(--text-mute); padding:10px var(--sp-2); border-bottom:1px solid var(--border); cursor:pointer; white-space:nowrap; user-select:none;}
+thead th:hover{color:var(--text-dim);}
+thead th .sort-arrow{margin-left:4px; opacity:.5; font-size:9px;}
+thead th.sorted .sort-arrow{opacity:1; color:var(--accent);}
+tbody td{padding:10px var(--sp-2); border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; white-space:nowrap;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:rgba(255,255,255,.025);}
+.cell-mono{font-family:'Roboto Mono',monospace; font-size:11.5px; color:var(--text-dim);}
+.cell-time{color:var(--text-mute); font-size:11.5px;}
+
+.badge{display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:5px; font-size:10.5px; font-weight:600;}
+.badge .dot{width:6px; height:6px; border-radius:50%;}
+.badge.sev-critical{background:rgba(239,68,68,.12); color:var(--critical);}
+.badge.sev-critical .dot{background:var(--critical);}
+.badge.sev-high{background:rgba(249,115,22,.12); color:var(--high);}
+.badge.sev-high .dot{background:var(--high);}
+.badge.sev-medium{background:rgba(234,179,8,.12); color:var(--medium);}
+.badge.sev-medium .dot{background:var(--medium);}
+.badge.sev-low, .badge.sev-normal{background:rgba(34,197,94,.12); color:var(--normal);}
+.badge.sev-low .dot, .badge.sev-normal .dot{background:var(--normal);}
+.badge.status-benign{background:rgba(34,197,94,.1); color:var(--normal);}
+.badge.status-attack{background:rgba(239,68,68,.1); color:var(--critical);}
+
+/* ───────────────── INCIDENTS LIST ───────────────── */
+.incident-list{display:flex; flex-direction:column;}
+.incident{display:flex; gap:12px; padding:14px var(--sp-2); border-bottom:1px solid var(--border);}
+.incident:last-child{border-bottom:none;}
+.incident-rank{width:22px; height:22px; border-radius:5px; background:var(--panel-alt); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; color:var(--text-dim); flex-shrink:0; margin-top:1px;}
+.incident-body{flex:1; min-width:0;}
+.incident-top{display:flex; align-items:center; gap:8px; margin-bottom:4px; flex-wrap:wrap;}
+.incident-title{font-size:12.5px; font-weight:600; color:var(--text);}
+.incident-desc{font-size:11.5px; color:var(--text-dim); margin-top:2px;}
+.incident-action{font-size:11px; color:var(--text-mute); margin-top:4px;}
+.incident-action b{color:var(--text-dim); font-weight:600;}
+
+/* ───────────────── LIVE CAPTURE ───────────────── */
+.live-status-row{display:flex; align-items:center; gap:10px; padding:var(--sp-2); border-bottom:1px solid var(--border);}
+.live-dot{width:9px; height:9px; border-radius:50%; background:var(--normal); flex-shrink:0;}
+.live-dot.stopped{background:var(--text-mute);}
+.live-status-text{font-size:12.5px; font-weight:600;}
+.live-status-sub{font-size:11px; color:var(--text-mute);}
+.live-stats{display:grid; grid-template-columns:repeat(3,1fr); gap:var(--sp-1); padding:var(--sp-2);}
+.live-stat{background:var(--panel-alt); border:1px solid var(--border); border-radius:6px; padding:10px 12px;}
+.live-stat-label{font-size:10px; color:var(--text-mute); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px;}
+.live-stat-value{font-family:'Roboto Mono',monospace; font-size:15px; font-weight:700;}
+.live-meta{padding:0 var(--sp-2) var(--sp-2); display:flex; flex-direction:column; gap:6px;}
+.meta-row{display:flex; justify-content:space-between; font-size:11.5px;}
+.meta-row span:first-child{color:var(--text-mute);}
+.meta-row span:last-child{font-family:'Roboto Mono',monospace; color:var(--text-dim);}
+.live-config{display:flex; align-items:center; gap:10px; padding:var(--sp-2); flex-wrap:wrap;}
+.select-input{background:var(--panel-alt); border:1px solid var(--border); border-radius:6px; padding:7px 10px; font-size:12px; color:var(--text); font-family:'Inter',sans-serif; outline:none; min-width:180px;}
+.select-input:focus{border-color:var(--accent);}
+.field-label{font-size:10.5px; color:var(--text-mute); margin-bottom:4px; text-transform:uppercase; letter-spacing:.5px;}
+
+/* ───────────────── UPLOAD ───────────────── */
+.upload-zone{border:1.5px dashed var(--border-lt); border-radius:var(--radius); padding:40px 24px; text-align:center; cursor:pointer; margin:var(--sp-2);}
+.upload-zone.drag-over, .upload-zone:hover{border-color:var(--accent); background:rgba(59,130,246,.04);}
+.upload-title{font-size:13.5px; font-weight:600; color:var(--text); margin-bottom:4px;}
+.upload-sub{font-size:11.5px; color:var(--text-mute);}
+.progress-wrap{display:none; padding:0 var(--sp-2) var(--sp-2);}
+.prog-status{font-size:12px; color:var(--text); margin-bottom:8px;}
+.prog-bar-bg{height:6px; background:var(--panel-alt); border-radius:4px; overflow:hidden;}
+.prog-bar-fill{height:100%; background:var(--accent); border-radius:4px; transition:width .3s linear;}
+.prog-label{font-size:11.5px; color:var(--text-mute); margin-top:8px;}
+.file-info-grid{display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:var(--sp-2);}
+.fi-row{display:flex; justify-content:space-between; padding:8px 10px; background:var(--panel-alt); border:1px solid var(--border); border-radius:6px; font-size:11.5px;}
+.fi-label{color:var(--text-mute);}
+.fi-value{font-family:'Roboto Mono',monospace; color:var(--text); font-weight:600;}
+
+/* ───────────────── BUTTONS ───────────────── */
+.btn{display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; border:1px solid var(--border); background:var(--panel-alt); color:var(--text-dim);}
+.btn:hover{color:var(--text); border-color:var(--border-lt);}
+.btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+.btn.primary:hover{background:var(--accent-dim);}
+.btn.danger{background:transparent; border-color:rgba(239,68,68,.4); color:var(--critical);}
+.btn:disabled{opacity:.4; cursor:default;}
+
+.pagination{display:flex; align-items:center; gap:10px; justify-content:flex-end; padding:12px var(--sp-2); border-top:1px solid var(--border);}
+.pg-info{font-size:11px; color:var(--text-mute); font-family:'Roboto Mono',monospace;}
+
+@media (max-width:1180px){
+  .grid-2, .grid-2b, .grid-2e{grid-template-columns:1fr;}
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<aside class="sidebar">
+  <nav class="nav" style="padding-top:var(--sp-2);">
+    <div class="nav-section-label">Monitor</div>
+    <a class="nav-item active" data-page="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a class="nav-item" data-page="livecap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+      Live Capture
+      <span class="nav-badge" id="liveBadge" style="display:none;">LIVE</span>
+    </a>
+    <a class="nav-item" data-page="alerts">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/></svg>
+      Alerts
+    </a>
+    <a class="nav-item" data-page="zeroday">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      Zero-Day
+    </a>
+    <div class="nav-section-label">Investigate</div>
+    <a class="nav-item" data-page="upload">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Upload & Analyze
+    </a>
+  </nav>
+
+</aside>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="page-title" id="topTitle">Security Operations Dashboard</div>
+      <div class="env-pill off" id="envPill"><span class="env-dot"></span><span id="envPillText">No data yet</span></div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock mono" id="clock">--:--:--</div>
+      <div class="icon-btn" title="Refresh" id="refreshBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v6h-6"/></svg>
+      </div>
+    </div>
+  </header>
+
+  <main class="content">
+
+    <!-- ═══════════ DASHBOARD ═══════════ -->
+    <section class="page active" id="page-dashboard">
+      <div class="content-header">
+        <div class="content-title" id="dashSub"><b>No results yet</b> — upload a CSV or start a live capture to begin</div>
+      </div>
+
+      <section class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-label">Total Network Flows</span>
+            <span class="kpi-icon blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h6l2-4 4 8 2-4h4"/></svg></span>
+          </div>
+          <div class="kpi-value" id="kpi-total">—</div>
+          <div class="kpi-foot" id="kpi-total-sub">Upload a CSV to begin</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-label">Threats Detected</span>
+            <span class="kpi-icon red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 10v4M12 17h.01"/></svg></span>
+          </div>
+          <div class="kpi-value" id="kpi-threats" style="color:var(--critical)">—</div>
+          <div class="kpi-foot" id="kpi-threats-sub">RF + XGB + ISO ensemble</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-label">Benign Traffic</span>
+            <span class="kpi-icon green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+          </div>
+          <div class="kpi-value" id="kpi-benign" style="color:var(--normal)">—</div>
+          <div class="kpi-foot" id="kpi-benign-sub">Normal traffic</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-top"><span class="kpi-label">Detection Rate</span>
+            <span class="kpi-icon slate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+          </div>
+          <div class="kpi-value" id="kpi-rate">—</div>
+          <div class="kpi-foot">Ensemble model, current session</div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Detection Timeline</div>
+              <div class="panel-sub">Cumulative threats over time — live capture only</div>
+            </div>
+          </div>
+          <div class="chart-wrap" id="timelinePanelBody">
+            <div class="empty"><div class="empty-title">No live capture data available.</div><div class="empty-sub">Start a live capture to visualize threat activity over time.</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Attack Distribution</div>
+              <div class="panel-sub">By classification, current session</div>
+            </div>
+          </div>
+          <div class="panel-body" id="attackBreakdown">
+            <div class="empty"><div class="empty-title">No data yet</div><div class="empty-sub">Results will appear here once flows are analyzed</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Recent Security Alerts</div>
+              <div class="panel-sub" id="alertsPanelSub">Flows flagged by RF, XGB, or Isolation Forest</div>
+            </div>
+            <button class="panel-link" data-goto="alerts">View all →</button>
+          </div>
+          <div id="dashAlertsWrap">
+            <div class="empty"><div class="empty-title">No alerts yet</div><div class="empty-sub">Analyze a CSV or start live capture to see flagged flows</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Top Critical Incidents</div>
+              <div class="panel-sub">Requiring immediate analyst action</div>
+            </div>
+          </div>
+          <div class="incident-list" id="incidentList">
+            <div class="empty"><div class="empty-title">No incidents yet</div><div class="empty-sub">Critical and high-severity flows will surface here</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-2b">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Live Capture Status</div>
+              <div class="panel-sub" id="dashLiveSub">Idle</div>
+            </div>
+            <button class="panel-link" data-goto="livecap">Open →</button>
+          </div>
+          <div class="live-status-row">
+            <span class="live-dot stopped" id="dashLiveDot"></span>
+            <div>
+              <div class="live-status-text" id="dashLiveText">Not capturing</div>
+              <div class="live-status-sub" id="dashLiveDetail">Start a capture from the Live Capture page</div>
+            </div>
+          </div>
+          <div class="live-stats">
+            <div class="live-stat"><div class="live-stat-label">Packets / Flows</div><div class="live-stat-value mono" id="dashLivePkts">—</div></div>
+            <div class="live-stat"><div class="live-stat-label">Threats Flagged</div><div class="live-stat-value mono" style="color:var(--critical)" id="dashLiveThreats">—</div></div>
+            <div class="live-stat"><div class="live-stat-label">Detection Rate</div><div class="live-stat-value mono" id="dashLiveRate">—</div></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Traffic Overview</div>
+              <div class="panel-sub">Benign vs. threat volume, current session</div>
+            </div>
+          </div>
+          <div class="panel-body" id="trafficOverview">
+            <div class="empty"><div class="empty-title">No data yet</div><div class="empty-sub">Volume breakdown appears once flows have been analyzed</div></div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ═══════════ LIVE CAPTURE ═══════════ -->
+    <section class="page" id="page-livecap">
+      <div class="content-header">
+        <div class="content-title">Capture traffic from a network interface and score each completed flow in real time</div>
+      </div>
+
+      <section class="grid-2b">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Capture Configuration</div>
+              <div class="panel-sub">Packets are grouped into flows, then scored by RF · XGB · ISO</div>
+            </div>
+          </div>
+          <div class="live-config">
+            <div>
+              <div class="field-label">Interface</div>
+              <select class="select-input" id="liveIface"><option value="">Loading interfaces…</option></select>
+            </div>
+            <button class="btn primary" id="liveStartBtn">Start Capture</button>
+            <button class="btn danger" id="liveStopBtn" disabled>Stop</button>
+          </div>
+          <div class="live-status-row">
+            <span class="live-dot stopped" id="liveDot"></span>
+            <div>
+              <div class="live-status-text" id="liveStatusText">Idle — select an interface and start capture</div>
+            </div>
+          </div>
+          <div class="live-stats">
+            <div class="live-stat"><div class="live-stat-label">Total Flows</div><div class="live-stat-value mono" id="lv-flows">0</div></div>
+            <div class="live-stat"><div class="live-stat-label">Threats</div><div class="live-stat-value mono" style="color:var(--critical)" id="lv-threats">0</div></div>
+            <div class="live-stat"><div class="live-stat-label">Detection Rate</div><div class="live-stat-value mono" id="lv-rate">0%</div></div>
+          </div>
+          <div class="live-meta">
+            <div class="meta-row"><span>Benign flows</span><span id="lv-benign">0</span></div>
+            <div class="meta-row"><span>RF / XGB / ISO threats</span><span id="lv-models">0 / 0 / 0</span></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Live Incidents</div>
+              <div class="panel-sub" id="lv-alert-count">Waiting for flows…</div>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn" id="exportLiveAlertsBtn">Export Alerts</button>
+              <button class="btn" id="exportLiveSessionBtn">Export Session</button>
+            </div>
+          </div>
+          <div class="incident-list" id="liveAlerts" style="max-height:420px; overflow-y:auto;">
+            <div class="empty"><div class="empty-title">No incidents yet</div><div class="empty-sub">Start capture and generate some traffic</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="panel">
+          <div class="panel-head">
+            <div><div class="panel-title">Attack Breakdown</div><div class="panel-sub">Live session, by label</div></div>
+          </div>
+          <div class="panel-body" id="liveBreakdown">
+            <div class="empty"><div class="empty-title">Awaiting flows…</div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div><div class="panel-title">Model Detections</div><div class="panel-sub">Share of flows flagged, per model</div></div>
+          </div>
+          <div class="panel-body" id="liveModelBars">
+            <div class="empty"><div class="empty-title">Awaiting flows…</div></div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ═══════════ ALERTS (flagged flows) ═══════════ -->
+    <section class="page" id="page-alerts">
+      <div class="content-header">
+        <div class="content-title">All flows flagged by Random Forest, XGBoost, or Isolation Forest</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><div class="panel-title">Flagged Flows</div><div class="panel-sub" id="alertsCount">0 flows</div></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" id="exportCsvBtn">Export CSV</button>
+            <button class="btn" id="exportJsonBtn">Export JSON</button>
+          </div>
+        </div>
+        <div class="table-toolbar">
+          <input class="search-input" id="alertSearch" placeholder="Search by label">
+          <div class="filter-group" id="alertFilterChips"></div>
+        </div>
+        <div class="table-scroll">
+          <table id="alertTable">
+            <thead>
+              <tr>
+                <th data-key="row">Flow #<span class="sort-arrow">▾</span></th>
+                <th data-key="severity">Severity<span class="sort-arrow">▾</span></th>
+                <th data-key="rf">RF Label<span class="sort-arrow">▾</span></th>
+                <th data-key="xgb">XGB Label<span class="sort-arrow">▾</span></th>
+                <th data-key="iso">ISO Score<span class="sort-arrow">▾</span></th>
+                <th>Detected By</th>
+                <th data-key="confidence">Confidence<span class="sort-arrow">▾</span></th>
+                <th data-key="final">Attack Type</th>
+              </tr>
+            </thead>
+            <tbody id="alertTbody"><tr><td colspan="8" class="empty">No results yet</td></tr></tbody>
+          </table>
+        </div>
+        <div class="pagination" id="alertPagination" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════ ZERO-DAY ═══════════ -->
+    <section class="page" id="page-zeroday">
+      <div class="content-header">
+        <div class="content-title">Flows flagged by <b>Isolation Forest only</b> — RF and XGB call these BENIGN. ISO score threshold: &lt; −0.5</div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <div><div class="panel-title">Zero-Day Candidates</div><div class="panel-sub">Anomalies not caught by the supervised classifiers</div></div>
+          <button class="btn" id="exportZeroDayBtn">Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th>Rank</th><th>Flow #</th><th>ISO Score</th><th>RF Label</th><th>XGB Label</th><th>Action</th></tr></thead>
+            <tbody id="zeroDayTbody"><tr><td colspan="6" class="empty">No results yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════ UPLOAD & ANALYZE ═══════════ -->
+    <section class="page" id="page-upload">
+      <div class="content-header">
+        <div class="content-title">Upload a CICFlowMeter / CIC-IDS-2017 formatted CSV to run it through the RF · XGB · ISO ensemble</div>
+      </div>
+      <div class="grid-2b">
+        <div class="panel">
+          <div class="panel-head"><div><div class="panel-title">Upload Flow CSV</div></div></div>
+          <div class="upload-zone" id="uploadZone">
+            <input type="file" id="fileInput" accept=".csv" style="display:none">
+            <div class="upload-title">Drag a CSV here, or click to choose a file</div>
+            <div class="upload-sub">CICFlowMeter / CIC-IDS-2017 format · up to 200 MB</div>
+            <button class="btn primary" style="margin-top:14px;" id="chooseFileBtn">Choose File</button>
+          </div>
+          <div class="progress-wrap" id="progressWrap">
+            <div class="prog-status" id="progStatus">Uploading…</div>
+            <div class="prog-bar-bg"><div class="prog-bar-fill" id="progBar" style="width:0%"></div></div>
+            <div class="prog-label" id="progLabel"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div><div class="panel-title">File Information</div></div></div>
+          <div id="fileInfoWrap">
+            <div class="empty"><div class="empty-sub">No file uploaded yet</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ═══════════ CLOCK ═══════════ */
+function tickClock(){ document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-US',{hour12:false}); }
+tickClock(); setInterval(tickClock,1000);
+
+/* ═══════════ NAV ═══════════ */
+const TITLES = {dashboard:'Security Operations Dashboard', livecap:'Live Capture', alerts:'Alerts', zeroday:'Zero-Day Candidates', upload:'Upload & Analyze'};
+function gotoPage(page){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active', n.dataset.page===page));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active', p.id==='page-'+page));
+  document.getElementById('topTitle').textContent = TITLES[page] || 'Dashboard';
+}
+document.querySelectorAll('.nav-item').forEach(item=>{
+  item.addEventListener('click', ()=> gotoPage(item.dataset.page));
+});
+document.querySelectorAll('[data-goto]').forEach(btn=>{
+  btn.addEventListener('click', ()=> gotoPage(btn.dataset.goto));
+});
+document.getElementById('refreshBtn').addEventListener('click', ()=>{ loadLatestResults(); globalLivePoll(); });
+
+/* ═══════════ STATE ═══════════ */
+let _lastData     = null;   // last /api/results payload (summary only)
+let _allFlows     = [];     // flows from /api/flows (page 1..N merged as needed)
+let _filteredFlows= [];
+let _zeroDayRows  = [];
+let _dashboardLiveMode = false;
+let _liveRunning   = false;
+
+const CRITICAL_TYPES = new Set(['DDoS','DoS Hulk','DoS GoldenEye','DoS slowloris','DoS Slowhttptest','Heartbleed']);
+const HIGH_TYPES     = new Set(['PortScan','FTP-Patator','SSH-Patator','Bot']);
+
+// Tracks whether Isolation Forest actually flagged anything in the current
+// session — used to suppress ISO-related UI when it detected zero threats,
+// so we never show a stray "ISO -0.001" next to an incident ISO didn't flag.
+let _isoActiveGlobally = false;
+
+/**
+ * Single source of truth for a flow's classification. Considers ALL THREE
+ * models (not just RF) so a flow that RF calls BENIGN but XGB flags as an
+ * attack never gets shown with a "Normal" severity badge next to an attack
+ * label — that mismatch was the root cause of the inconsistent alert rows.
+ */
+function deriveFlow(f){
+  const rfAttack  = f.rf  !== 'BENIGN';
+  const xgbAttack = f.xgb !== 'BENIGN';
+  const isoAttack = f.iso < -0.5;
+  const isAttack  = rfAttack || xgbAttack || isoAttack;
+
+  // Final attack label: prefer whichever supervised model actually named it;
+  // fall back to "Anomaly" only when solely Isolation Forest flagged it.
+  const final = rfAttack ? f.rf : (xgbAttack ? f.xgb : (isoAttack ? 'Anomaly' : 'BENIGN'));
+
+  let sevText, sevCls;
+  if(!isAttack){
+    sevText = 'Normal'; sevCls = 'sev-normal';
+  } else if(CRITICAL_TYPES.has(final)){
+    sevText = 'Critical'; sevCls = 'sev-critical';
+  } else if(HIGH_TYPES.has(final)){
+    sevText = 'High'; sevCls = 'sev-high';
+  } else if(final === 'Anomaly'){
+    sevText = 'Medium'; sevCls = 'sev-medium';
+  } else {
+    sevText = 'High'; sevCls = 'sev-high'; // any other named attack type defaults to High
+  }
+
+  const confPct = (typeof f.confidence === 'number') ? f.confidence : null;
+  const confLabel = confPct==null ? null : (confPct>=90 ? 'High' : confPct>=70 ? 'Medium' : 'Low');
+
+  return {
+    ...f,
+    final, isAttack,
+    sevText, sevCls,
+    detectedBy: { rf: rfAttack, xgb: xgbAttack, iso: isoAttack },
+    confPct, confLabel,
+  };
+}
+
+function sevBadge(flow){ return `<span class="badge ${flow.sevCls}"><span class="dot"></span>${flow.sevText}</span>`; }
+
+/** Attack Type badge — BENIGN rows show "-", never a stray attack name. */
+function finalBadge(flow){
+  if(!flow.isAttack) return `<span class="badge status-benign">–</span>`;
+  return `<span class="badge status-attack">${flow.final}</span>`;
+}
+
+/** Small check-mark list of which model(s) actually flagged this flow. */
+function detectedByBadges(flow){
+  const items = [];
+  if(flow.detectedBy.rf)  items.push('RF');
+  if(flow.detectedBy.xgb) items.push('XGB');
+  if(flow.detectedBy.iso && _isoActiveGlobally) items.push('ISO');
+  if(!items.length) return `<span style="color:var(--text-mute)">–</span>`;
+  return items.map(m=>`<span class="badge status-benign" style="margin-right:3px;">✓ ${m}</span>`).join('');
+}
+
+/** Confidence cell — shows a High/Medium/Low bucket next to the raw number
+ *  so a misleading-looking 45–50% isn't presented as if it were meaningful
+ *  on its own. ISO-only detections show the anomaly score instead, since
+ *  the averaged RF/XGB probability isn't a real confidence for those. */
+function confidenceCell(flow){
+  if(flow.final === 'Anomaly'){
+    return `<span class="cell-mono" style="color:var(--medium)">anomaly score ${flow.iso.toFixed(3)}</span>`;
+  }
+  if(flow.confPct == null) return '<span class="cell-mono">—</span>';
+  const cls = flow.confLabel==='High' ? 'sev-normal' : flow.confLabel==='Medium' ? 'sev-medium' : 'sev-critical';
+  return `<span class="badge ${cls}" style="margin-right:6px;">${flow.confLabel}</span><span class="cell-mono">${flow.confPct.toFixed(2)}%</span>`;
+}
+
+/**
+ * Single source of truth for every top-level dashboard number.
+ * Unique threats = backend's ensemble_threats (already a proper OR-union
+ * across RF/XGB/ISO — see predictor.py). Benign is ALWAYS derived as
+ * total - uniqueThreats, never read from a separately-tracked backend
+ * field, so Total = Benign + Threats holds by construction, not by luck.
+ */
+function computeStats(d){
+  const total  = d.total_flows || 0;
+  const unique = d.ensemble_threats != null ? d.ensemble_threats : (d.threat_count || 0);
+  const benign = Math.max(0, total - unique);
+  const rate       = total ? (unique / total * 100) : 0;
+  const threatPct  = rate;
+  const benignPct  = total ? (100 - threatPct) : 0;
+  return {
+    total, unique, benign, rate, threatPct, benignPct,
+    rf:  d.rf_threats    || 0,
+    xgb: d.xgb_threats   || 0,
+    iso: d.iso_anomalies || 0,
+  };
+}
+
+/* ═══════════ LOAD RESULTS (CSV analysis path) ═══════════ */
+async function loadLatestResults(){
+  try{
+    const res = await fetch('/api/results');
+    if(!res.ok) return; // "No results yet" — leave placeholders
+    const data = await res.json();
+    _lastData = data;
+    if(!_dashboardLiveMode) renderStaticDashboard(data);
+    await loadFlows();
+  }catch(e){ /* ignore */ }
+}
+
+async function loadFlows(){
+  try{
+    const r = await fetch('/api/flows?page=1&per_page=2000');
+    if(!r.ok) return;
+    const d = await r.json();
+    _allFlows = d.flows || [];
+    if(!_dashboardLiveMode){
+      renderAlertsTable();
+      renderZeroDay();
+      renderDashAlertsPreview();
+      renderIncidentsPreview();
+    }
+  }catch(e){ /* ignore */ }
+}
+
+function renderStaticDashboard(d){
+  const s = computeStats(d);
+  _isoActiveGlobally = s.iso > 0;
+
+  document.getElementById('dashSub').innerHTML = `<b>${s.total.toLocaleString()} flows</b> analyzed · ${s.unique.toLocaleString()} unique threats detected`;
+  document.getElementById('envPill').className = 'env-pill ok';
+  document.getElementById('envPillText').textContent = 'Results loaded';
+
+  document.getElementById('kpi-total').textContent      = s.total.toLocaleString();
+  document.getElementById('kpi-total-sub').textContent  = 'From last uploaded CSV';
+  document.getElementById('kpi-threats').textContent    = s.unique.toLocaleString();
+  // Per-model counts are labeled explicitly as detections-by-model, not a
+  // sum — they overlap (a single flow can be flagged by more than one
+  // model), so RF + XGB + ISO will not equal the unique threat total above.
+  document.getElementById('kpi-threats-sub').textContent=
+    `Detections by model: ${s.rf.toLocaleString()} RF · ${s.xgb.toLocaleString()} XGB · ${s.iso.toLocaleString()} ISO (may overlap)`;
+  document.getElementById('kpi-benign').textContent     = s.benign.toLocaleString();
+  document.getElementById('kpi-benign-sub').textContent = s.total ? s.benignPct.toFixed(2)+'% of traffic' : '—';
+  document.getElementById('kpi-rate').textContent       = s.rate.toFixed(2)+'%';
+
+  renderAttackDistribution(d.label_distribution || {});
+  renderTrafficOverview(s);
+
+  document.getElementById('timelinePanelBody').innerHTML =
+    '<div class="empty"><div class="empty-title">No live capture data available.</div><div class="empty-sub">Start a live capture to visualize threat activity over time.</div></div>';
+}
+
+function renderAttackDistribution(dist){
+  const entries = Object.entries(dist);
+  if(!entries.length){
+    document.getElementById('attackBreakdown').innerHTML = '<div class="empty"><div class="empty-title">No data yet</div></div>';
+    return;
+  }
+  const maxVal = Math.max(...entries.map(e=>e[1]));
+  const COLORS = {'BENIGN':'var(--normal)','DDoS':'var(--critical)','PortScan':'var(--accent)','DoS Hulk':'var(--high)','Bot':'var(--medium)'};
+  document.getElementById('attackBreakdown').innerHTML = entries
+    .sort((a,b)=>b[1]-a[1])
+    .map(([label,count])=>{
+      const pct   = Math.round(count/maxVal*100);
+      const color = COLORS[label] || 'var(--critical)';
+      return `<div class="bar-row">
+        <div class="bar-meta">
+          <span class="bar-label"><span class="bar-swatch" style="background:${color}"></span>${label}</span>
+          <span class="bar-count">${count.toLocaleString()}</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>`;
+    }).join('');
+}
+
+function renderTrafficOverview(s){
+  if(!s.total){
+    document.getElementById('trafficOverview').innerHTML = '<div class="empty"><div class="empty-title">No data yet</div></div>';
+    return;
+  }
+  // benignPct + threatPct == 100 by construction (computeStats derives
+  // benignPct as 100 - threatPct from the same base number), so these
+  // always sum to exactly 100.00% regardless of rounding.
+  document.getElementById('trafficOverview').innerHTML = `
+    <div class="bar-row">
+      <div class="bar-meta"><span class="bar-label"><span class="bar-swatch" style="background:var(--normal)"></span>Benign</span><span class="bar-count">${s.benign.toLocaleString()} (${s.benignPct.toFixed(2)}%)</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${s.benignPct}%;background:var(--normal)"></div></div>
+    </div>
+    <div class="bar-row">
+      <div class="bar-meta"><span class="bar-label"><span class="bar-swatch" style="background:var(--critical)"></span>Malicious</span><span class="bar-count">${s.unique.toLocaleString()} (${s.threatPct.toFixed(2)}%)</span></div>
+      <div class="bar-track"><div class="bar-fill" style="width:${s.threatPct}%;background:var(--critical)"></div></div>
+    </div>`;
+}
+
+/* ═══════════ ALERTS TABLE (static / CSV path) ═══════════ */
+let sortKey='row', sortDir=1, activeSev='all';
+
+function buildFilterChips(){
+  const group = document.getElementById('alertFilterChips');
+  const sevs = ['all','Critical','High','Medium','Normal'];
+  group.innerHTML = sevs.map(s=>`<div class="filter-chip ${s===activeSev?'active':''}" data-sev="${s}">${s==='all'?'All':s}</div>`).join('');
+  group.querySelectorAll('.filter-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      activeSev = chip.dataset.sev;
+      group.querySelectorAll('.filter-chip').forEach(c=>c.classList.toggle('active', c===chip));
+      renderAlertsTable();
+    });
+  });
+}
+buildFilterChips();
+
+function renderAlertsTable(){
+  document.getElementById('alertsCount').textContent = _allFlows.length.toLocaleString()+' flows';
+  const q = (document.getElementById('alertSearch').value||'').toLowerCase();
+
+  let rows = _allFlows.map(deriveFlow).filter(f=>{
+    if(activeSev!=='all' && f.sevText!==activeSev) return false;
+    if(q && !(f.rf.toLowerCase().includes(q) || f.xgb.toLowerCase().includes(q) || f.final.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  rows.sort((a,b)=>{
+    let av = sortKey==='severity' ? a.sevText : a[sortKey];
+    let bv = sortKey==='severity' ? b.sevText : b[sortKey];
+    if(av<bv) return -1*sortDir; if(av>bv) return 1*sortDir; return 0;
+  });
+
+  const tbody = document.getElementById('alertTbody');
+  if(!rows.length){
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No flows match your filters</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.slice(0,500).map(f=>`
+    <tr>
+      <td class="cell-mono">#${f.row+1}</td>
+      <td>${sevBadge(f)}</td>
+      <td class="cell-mono">${f.rf}</td>
+      <td class="cell-mono">${f.xgb}</td>
+      <td class="cell-mono" style="color:${f.iso<-0.5?'var(--critical)':'var(--text-dim)'}">${f.iso.toFixed(3)}</td>
+      <td>${detectedByBadges(f)}</td>
+      <td>${confidenceCell(f)}</td>
+      <td>${finalBadge(f)}</td>
+    </tr>`).join('');
+}
+document.querySelectorAll('#alertTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(sortKey===key) sortDir*=-1; else { sortKey=key; sortDir=1; }
+    document.querySelectorAll('#alertTable thead th').forEach(t=>t.classList.toggle('sorted', t===th));
+    renderAlertsTable();
+  });
+});
+document.getElementById('alertSearch').addEventListener('input', renderAlertsTable);
+
+function renderDashAlertsPreview(){
+  const wrap = document.getElementById('dashAlertsWrap');
+  if(!_allFlows.length){
+    wrap.innerHTML = '<div class="empty"><div class="empty-title">No alerts yet</div></div>';
+    return;
+  }
+  const rows = _allFlows.slice(0,8).map(deriveFlow).map(f=>`
+    <tr>
+      <td class="cell-mono">#${f.row+1}</td>
+      <td>${sevBadge(f)}</td>
+      <td>${finalBadge(f)}</td>
+      <td>${detectedByBadges(f)}</td>
+    </tr>`).join('');
+  wrap.innerHTML = `<div class="table-scroll" style="max-height:none;">
+    <table><thead><tr><th>Flow #</th><th>Severity</th><th>Attack Type</th><th>Detected By</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div style="padding:10px 16px; text-align:right; font-size:11.5px; color:var(--text-mute); border-top:1px solid var(--border);">
+      Showing 8 of ${_allFlows.length.toLocaleString()} — <span class="panel-link" data-goto="alerts" style="display:inline;">view all →</span>
+    </div>`;
+  wrap.querySelectorAll('[data-goto]').forEach(el=>el.addEventListener('click',()=>gotoPage(el.dataset.goto)));
+}
+
+function renderIncidentsPreview(){
+  const wrap = document.getElementById('incidentList');
+  if(!_allFlows.length){ wrap.innerHTML = '<div class="empty"><div class="empty-title">No incidents yet</div></div>'; return; }
+  const ranked = _allFlows.map(deriveFlow)
+    .filter(f=> f.sevText==='Critical' || f.sevText==='High')
+    .slice(0,6);
+  if(!ranked.length){ wrap.innerHTML = '<div class="empty"><div class="empty-title">No critical incidents</div><div class="empty-sub">All flagged flows are Medium severity or below</div></div>'; return; }
+  wrap.innerHTML = ranked.map((f,i)=>{
+    // Only mention the ISO score if Isolation Forest actually flagged this
+    // specific flow AND detected something this session — otherwise an
+    // irrelevant "-0.001" reading gets shown as if it mattered.
+    const isoNote = (f.detectedBy.iso && _isoActiveGlobally) ? ` · ISO ${f.iso.toFixed(3)}` : '';
+    return `
+    <div class="incident">
+      <div class="incident-rank">${i+1}</div>
+      <div class="incident-body">
+        <div class="incident-top"><span class="incident-title">${f.final}</span>${sevBadge(f)}</div>
+        <div class="incident-desc mono">Flow #${f.row+1}${isoNote}</div>
+        <div class="incident-action"><b>Detected by:</b> ${detectedByBadges(f)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ═══════════ ZERO-DAY ═══════════ */
+function renderZeroDay(){
+  _zeroDayRows = _allFlows
+    .filter(f=> f.iso < -0.5 && f.rf==='BENIGN' && f.xgb==='BENIGN')
+    .sort((a,b)=> a.iso - b.iso)
+    .slice(0,50);
+  const tbody = document.getElementById('zeroDayTbody');
+  if(!_zeroDayRows.length){
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No zero-day candidates — nothing flagged by Isolation Forest only</td></tr>';
+    return;
+  }
+  tbody.innerHTML = _zeroDayRows.map((f,i)=>`
+    <tr>
+      <td class="cell-mono">${i+1}</td>
+      <td class="cell-mono">#${f.row+1}</td>
+      <td class="cell-mono" style="color:var(--medium); font-weight:600;">${f.iso.toFixed(4)}</td>
+      <td><span class="badge status-benign">${f.rf}</span></td>
+      <td><span class="badge status-benign">${f.xgb}</span></td>
+      <td class="cell-mono" style="color:var(--medium);">Investigate manually</td>
+    </tr>`).join('');
+}
+
+/* ═══════════ EXPORT (CSV path) ═══════════ */
+function download(filename, mime, content){
+  const blob = new Blob([content],{type:mime});
+  const url  = URL.createObjectURL(blob);
+  const a    = Object.assign(document.createElement('a'),{href:url, download:filename});
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+document.getElementById('exportCsvBtn').addEventListener('click', ()=>{
+  window.location.href = '/api/flows?fmt=csv';
+});
+document.getElementById('exportJsonBtn').addEventListener('click', ()=>{
+  if(!_allFlows.length){ alert('No flows to export yet.'); return; }
+  download('ai_ids_flows.json','application/json', JSON.stringify(_allFlows,null,2));
+});
+document.getElementById('exportZeroDayBtn').addEventListener('click', ()=>{
+  if(!_zeroDayRows.length){ alert('No zero-day candidates to export.'); return; }
+  const header = 'rank,flow,iso_score,rf,xgb\n';
+  const body = _zeroDayRows.map((f,i)=>`${i+1},${f.row+1},${f.iso.toFixed(4)},${f.rf},${f.xgb}`).join('\n');
+  download('ai_ids_zeroday.csv','text/csv', header+body);
+});
+
+/* ═══════════ UPLOAD & ANALYZE (wired to /api/upload + /api/analyse) ═══════════ */
+const zone = document.getElementById('uploadZone');
+const fileInput = document.getElementById('fileInput');
+document.getElementById('chooseFileBtn').addEventListener('click', e=>{ e.stopPropagation(); fileInput.click(); });
+zone.addEventListener('click', ()=> fileInput.click());
+fileInput.addEventListener('change', e=>{ if(e.target.files[0]) handleUpload(e.target.files[0]); });
+zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', ()=> zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e=>{
+  e.preventDefault(); zone.classList.remove('drag-over');
+  if(e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
+});
+
+async function handleUpload(file){
+  if(!file.name.toLowerCase().endsWith('.csv')){ alert('Please select a CSV file.'); return; }
+
+  const wrap = document.getElementById('progressWrap');
+  const bar  = document.getElementById('progBar');
+  const status = document.getElementById('progStatus');
+  const label  = document.getElementById('progLabel');
+
+  wrap.style.display = 'block';
+  bar.style.width = '10%'; bar.style.background='';
+  status.textContent = 'Uploading '+file.name+'…';
+  label.textContent = '';
+  showFileInfo(file);
+
+  let savedPath;
+  try{
+    const fd = new FormData(); fd.append('file', file);
+    const r = await fetch('/api/upload', {method:'POST', body:fd});
+    const data = await r.json();
+    if(!r.ok){ showError(status,bar,data.error||r.status); return; }
+    savedPath = data.path;
+    bar.style.width = '40%';
+    status.textContent = 'Running RF · XGB · Isolation Forest on '+data.rows.toLocaleString()+' flows…';
+    updateFileInfoRows(data);
+  }catch(e){ showError(status,bar,e.message); return; }
+
+  try{
+    const r = await fetch('/api/analyse', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({path:savedPath})});
+    const data = await r.json();
+    if(!r.ok){ showError(status,bar,data.error||r.status); return; }
+    bar.style.width = '100%';
+    status.textContent = 'Complete';
+    label.textContent = `${data.total_flows.toLocaleString()} flows · ${data.ensemble_threats.toLocaleString()} threats · ${data.detection_rate}% detection rate`;
+    _lastData = data;
+    renderStaticDashboard(data);
+    await loadFlows();
+    gotoPage('dashboard');
+  }catch(e){ showError(status,bar,e.message); }
+}
+
+function showFileInfo(file){
+  const time = new Date().toLocaleTimeString();
+  document.getElementById('fileInfoWrap').innerHTML = `
+    <div class="file-info-grid">
+      <div class="fi-row"><span class="fi-label">Filename</span><span class="fi-value">${file.name}</span></div>
+      <div class="fi-row"><span class="fi-label">Size</span><span class="fi-value">${(file.size/1048576).toFixed(1)} MB</span></div>
+      <div class="fi-row"><span class="fi-label">Uploaded</span><span class="fi-value">${time}</span></div>
+      <div class="fi-row" id="fi-rows"><span class="fi-label">Rows</span><span class="fi-value">—</span></div>
+      <div class="fi-row" id="fi-cols"><span class="fi-label">Columns</span><span class="fi-value">—</span></div>
+      <div class="fi-row"><span class="fi-label">Format</span><span class="fi-value">CICFlowMeter</span></div>
+    </div>`;
+}
+function updateFileInfoRows(data){
+  const r = document.getElementById('fi-rows'), c = document.getElementById('fi-cols');
+  if(r) r.innerHTML = `<span class="fi-label">Rows</span><span class="fi-value">${data.rows.toLocaleString()}</span>`;
+  if(c) c.innerHTML = `<span class="fi-label">Columns</span><span class="fi-value">${data.columns}</span>`;
+}
+function showError(status,bar,msg){
+  status.textContent = 'Error: '+msg;
+  bar.style.width = '100%'; bar.style.background = 'var(--critical)';
+}
+
+/* ═══════════ LIVE CAPTURE (wired to /api/live/*) ═══════════ */
+async function loadLiveInterfaces(){
+  const sel = document.getElementById('liveIface');
+  try{
+    const r = await fetch('/api/live/interfaces');
+    const d = await r.json();
+    const list = d.interfaces || [];
+    if(!list.length){ sel.innerHTML = '<option value="">No interfaces found</option>'; return; }
+    sel.innerHTML = list.map(i=>`<option value="${i.name}">${i.name}${i.up===true?' (up)':i.up===false?' (down)':''}</option>`).join('');
+  }catch(e){ sel.innerHTML = '<option value="">Failed to load interfaces</option>'; }
+}
+loadLiveInterfaces();
+
+document.getElementById('liveStartBtn').addEventListener('click', async ()=>{
+  const iface = document.getElementById('liveIface').value;
+  if(!iface){ alert('Select a network interface first.'); return; }
+  try{
+    const r = await fetch('/api/live/start', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({interface:iface})});
+    const d = await r.json();
+    if(!r.ok){ alert('Error: '+(d.error||r.status)); return; }
+    liveSetUI(true, 'Capturing on '+iface+' — waiting for first flow to close…');
+    startLivePoll();
+  }catch(e){ alert('Network error: '+e.message+'\n\nMake sure Flask is running with sufficient permissions for packet capture.'); }
+});
+document.getElementById('liveStopBtn').addEventListener('click', async ()=>{
+  await fetch('/api/live/stop', {method:'POST'});
+  liveSetUI(false, 'Stopped');
+  stopLivePoll();
+});
+document.getElementById('exportLiveAlertsBtn').addEventListener('click', ()=>{ window.location.href = '/api/live/export?scope=alerts&fmt=csv'; });
+document.getElementById('exportLiveSessionBtn').addEventListener('click', ()=>{ window.location.href = '/api/live/export?scope=session&fmt=json'; });
+
+function liveSetUI(running, text){
+  _liveRunning = running;
+  document.getElementById('liveStartBtn').disabled = running;
+  document.getElementById('liveStopBtn').disabled = !running;
+  document.getElementById('liveDot').className = 'live-dot'+(running?'':' stopped');
+  document.getElementById('liveStatusText').textContent = text || '';
+  document.getElementById('liveBadge').style.display = running ? 'inline-block' : 'none';
+}
+
+let _livePollTimer = null;
+function startLivePoll(){ if(_livePollTimer) return; _livePollTimer = setInterval(livePoll, 2000); livePoll(); }
+function stopLivePoll(){ if(_livePollTimer){ clearInterval(_livePollTimer); _livePollTimer = null; } }
+
+async function livePoll(){
+  try{
+    const r = await fetch('/api/live/status');
+    if(!r.ok) return;
+    const d = await r.json();
+    if(!d.running && _liveRunning){ liveSetUI(false,'Stopped'); stopLivePoll(); }
+
+    const flows = d.total_flows || 0;
+    document.getElementById('lv-flows').textContent = flows.toLocaleString();
+    document.getElementById('lv-threats').textContent = (d.threat_count||0).toLocaleString();
+    document.getElementById('lv-rate').textContent = (d.detection_rate||0).toFixed(2)+'%';
+    document.getElementById('lv-benign').textContent = (d.benign_count||0).toLocaleString();
+    document.getElementById('lv-models').textContent = `${d.rf_threats||0} / ${d.xgb_threats||0} / ${d.iso_anomalies||0} (may overlap)`;
+
+    if(_liveRunning && flows===0){
+      document.getElementById('liveStatusText').textContent = 'Capturing packets… flows appear once a connection closes (TCP FIN/RST or 120s idle)';
+    } else if(_liveRunning){
+      document.getElementById('liveStatusText').textContent = `${flows.toLocaleString()} flows completed`;
+    }
+
+    const alerts = d.latest_alerts || [];
+    document.getElementById('lv-alert-count').textContent = alerts.length ? alerts.length+' incidents this session' : 'Waiting for flows…';
+    if(alerts.length){
+      document.getElementById('liveAlerts').innerHTML = alerts.slice(0,30).map(buildIncidentCard).join('');
+    }
+
+    const counts = d.label_counts || {};
+    const maxC = Math.max(1, ...Object.values(counts));
+    const BCOL = {DDoS:'var(--critical)',PortScan:'var(--accent)',Bot:'var(--medium)',Anomaly:'var(--high)'};
+    document.getElementById('liveBreakdown').innerHTML = Object.keys(counts).length
+      ? Object.entries(counts).sort((a,b)=>b[1]-a[1]).map(([lbl,cnt])=>{
+          const col = BCOL[lbl] || 'var(--high)';
+          return `<div class="bar-row"><div class="bar-meta"><span class="bar-label"><span class="bar-swatch" style="background:${col}"></span>${lbl}</span><span class="bar-count">${cnt.toLocaleString()}</span></div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt/maxC*100)}%;background:${col}"></div></div></div>`;
+        }).join('')
+      : '<div class="empty"><div class="empty-title">No attacks detected yet</div></div>';
+
+    const tot = Math.max(1, flows);
+    function mbar(name,count,color){
+      const pct = Math.round((count||0)/tot*100);
+      return `<div class="bar-row"><div class="bar-meta"><span class="bar-label"><span class="bar-swatch" style="background:${color}"></span>${name}</span><span class="bar-count">${(count||0).toLocaleString()} (${pct}%)</span></div><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div></div>`;
+    }
+    document.getElementById('liveModelBars').innerHTML =
+      mbar('Random Forest', d.rf_threats||0, 'var(--accent)')+
+      mbar('XGBoost', d.xgb_threats||0, 'var(--high)')+
+      mbar('Isolation Forest', d.iso_anomalies||0, 'var(--medium)');
+
+    // Feed dashboard while live
+    if(d.running){ _dashboardLiveMode = true; renderDashboardLive(d); }
+    else if(_dashboardLiveMode){ _dashboardLiveMode = false; if(_lastData) renderStaticDashboard(_lastData); loadFlows(); }
+
+  }catch(e){ /* network blip */ }
+}
+
+function buildIncidentCard(a){
+  const sevCls = {Critical:'sev-critical', High:'sev-high', Medium:'sev-medium', Low:'sev-normal'}[a.severity] || 'sev-normal';
+  const ts = new Date(a.ts).toLocaleTimeString();
+  const src = a.src_ip!=null ? `${a.src_ip}${a.src_port!=null?':'+a.src_port:''}` : 'unknown';
+  const dst = a.dst_ip!=null ? `${a.dst_ip}${a.dst_port!=null?':'+a.dst_port:''}` : 'unknown';
+  return `<div class="incident">
+    <div class="incident-rank"><span class="badge ${sevCls}" style="padding:2px 6px;"><span class="dot"></span></span></div>
+    <div class="incident-body">
+      <div class="incident-top"><span class="incident-title">${a.label}</span><span class="badge ${sevCls}">${a.severity}</span><span class="cell-time">${ts}</span></div>
+      <div class="incident-desc mono">${src} → ${dst} · ${a.protocol||'—'} · confidence ${a.confidence!=null?a.confidence+'%':'—'}${(a.iso!=null && a.iso<-0.5) ? ' · ISO '+a.iso : ''}</div>
+      <div class="incident-action"><b>Action:</b> ${a.recommended_action||'Investigate manually.'}</div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════ DASHBOARD LIVE MODE ═══════════ */
+function renderDashboardLive(d){
+  // Reuse the same source-of-truth calculation as the static dashboard —
+  // live_capture.py's threat_count/benign_count are already complementary
+  // (total = threat_count + benign_count), but routing through computeStats
+  // keeps formatting (2-decimal rates, "may overlap" wording) identical
+  // across both live and CSV modes so numbers never look inconsistent
+  // when switching between them.
+  const s = computeStats({
+    total_flows: d.total_flows, ensemble_threats: d.threat_count,
+    rf_threats: d.rf_threats, xgb_threats: d.xgb_threats, iso_anomalies: d.iso_anomalies,
+  });
+  _isoActiveGlobally = s.iso > 0;
+
+  document.getElementById('dashSub').innerHTML = `<b>Live capture running</b> · ${s.total.toLocaleString()} flows · ${s.unique.toLocaleString()} threats so far`;
+  document.getElementById('envPill').className = 'env-pill live';
+  document.getElementById('envPillText').textContent = 'Live capture';
+
+  document.getElementById('kpi-total').textContent = s.total.toLocaleString();
+  document.getElementById('kpi-total-sub').textContent = 'Live capture — updating in real time';
+  document.getElementById('kpi-threats').textContent = s.unique.toLocaleString();
+  document.getElementById('kpi-threats-sub').textContent =
+    `Detections by model: ${s.rf.toLocaleString()} RF · ${s.xgb.toLocaleString()} XGB · ${s.iso.toLocaleString()} ISO (may overlap)`;
+  document.getElementById('kpi-benign').textContent = s.benign.toLocaleString();
+  document.getElementById('kpi-benign-sub').textContent = s.total ? s.benignPct.toFixed(2)+'% of traffic' : 'Waiting for flows…';
+  document.getElementById('kpi-rate').textContent = s.rate.toFixed(2)+'%';
+
+  const dist = Object.assign({}, d.label_counts||{});
+  if(s.benign>0) dist['BENIGN'] = s.benign;
+  renderAttackDistribution(dist);
+  renderTrafficOverview(s);
+
+  const tl = d.timeline || [];
+  if(tl.length){
+    const maxT = Math.max(1, ...tl.map(p=>p.threats));
+    document.getElementById('timelinePanelBody').innerHTML = `
+      <div class="chart-legend"><div class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>Cumulative threats</div></div>
+      <div style="display:flex; align-items:flex-end; gap:2px; height:120px; padding-top:8px;">
+        ${tl.map(p=>`<div style="flex:1; min-height:2px; border-radius:2px 2px 0 0; background:${p.new>0?'var(--critical)':'var(--accent)'}; height:${Math.max(4,Math.round(p.threats/maxT*100))}%;"></div>`).join('')}
+      </div>`;
+  } else {
+    document.getElementById('timelinePanelBody').innerHTML =
+      '<div class="empty"><div class="empty-title">No live capture data available.</div><div class="empty-sub">Start a live capture to visualize threat activity over time.</div></div>';
+  }
+
+  document.getElementById('dashLiveSub').textContent = 'Capturing';
+  document.getElementById('dashLiveDot').className = 'live-dot';
+  document.getElementById('dashLiveText').textContent = 'Capturing traffic';
+  document.getElementById('dashLiveDetail').textContent = `${s.total.toLocaleString()} flows completed`;
+  document.getElementById('dashLivePkts').textContent = s.total.toLocaleString();
+  document.getElementById('dashLiveThreats').textContent = s.unique.toLocaleString();
+  document.getElementById('dashLiveRate').textContent = s.rate.toFixed(2)+'%';
+
+  const alerts = (d.latest_alerts||[]).slice(0,8);
+  document.getElementById('dashAlertsWrap').innerHTML = alerts.length
+    ? `<div class="table-scroll" style="max-height:none;"><table><thead><tr><th>Time</th><th>Severity</th><th>Label</th><th>Source</th><th>Destination</th></tr></thead><tbody>${
+        alerts.map(a=>{
+          const sevCls = {Critical:'sev-critical',High:'sev-high',Medium:'sev-medium',Low:'sev-normal'}[a.severity]||'sev-normal';
+          return `<tr><td class="cell-time mono">${new Date(a.ts).toLocaleTimeString()}</td><td><span class="badge ${sevCls}"><span class="dot"></span>${a.severity}</span></td><td class="cell-mono">${a.label}</td><td class="cell-mono">${a.src_ip||'—'}</td><td class="cell-mono">${a.dst_ip||'—'}</td></tr>`;
+        }).join('')
+      }</tbody></table></div>`
+    : '<div class="empty"><div class="empty-title">No alerts yet</div></div>';
+
+  document.getElementById('incidentList').innerHTML = alerts.length
+    ? alerts.slice(0,6).map((a,i)=>{
+        const sevCls = {Critical:'sev-critical',High:'sev-high',Medium:'sev-medium',Low:'sev-normal'}[a.severity]||'sev-normal';
+        return `<div class="incident"><div class="incident-rank">${i+1}</div><div class="incident-body">
+          <div class="incident-top"><span class="incident-title">${a.label}</span><span class="badge ${sevCls}"><span class="dot"></span>${a.severity}</span></div>
+          <div class="incident-desc mono">${a.src_ip||'—'} → ${a.dst_ip||'—'} · confidence ${a.confidence!=null?a.confidence+'%':'—'}</div>
+        </div></div>`;
+      }).join('')
+    : '<div class="empty"><div class="empty-title">No incidents yet</div></div>';
+}
+
+/* ═══════════ INIT ═══════════ */
+async function globalLivePoll(){
+  try{
+    const r = await fetch('/api/live');
+    if(!r.ok) return;
+    const d = await r.json();
+    if(d.running){ liveSetUI(true, `${(d.total_flows||0).toLocaleString()} flows completed`); startLivePoll(); }
+  }catch(e){ /* ignore */ }
+}
+loadLatestResults();
+globalLivePoll();
+</script>
+</body>
+</html>

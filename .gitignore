@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dataset (don't upload)
+archive/
+
+# User uploaded files
+uploads/
+
+# Large processed datasets
+data/raw/
+data/processed/
+
+# Generated results
+results/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Python cache
+.pytest_cache/
+
+
+# Trained models
+models/*.pkl
+models/*.json
+
+# Keep README if you add one
+!models/README.md
